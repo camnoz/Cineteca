@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+LATAM Build Script for Compile purpose
+@company	LATAM AIRLINES GROUP
+@area 		LATAM Enterprise Architecture 
+@author 	Cesar Pasache (cesar.pasache@lan.com)
+@author 	Pedro Torres (pedro.torres@lan.com)
+-->
+<project name="ProductManager-1.0" basedir="." default="build">
+	<!-- Reference environment property -->
+	<property environment="env" />
+
+	<!-- Ant targets for compile and deploy -->
+	<target name="build" depends="build-ear" />
+
+	<!-- Property file -->
+	<property file="weblogic.properties" />
+
+	<!-- Default Project Specification -->
+	<property name="project.name" value="${ant.project.name}" />
+	<property name="project.vendor" value="LATAM Airlines Groups." />
+	<property name="project.encoding" value="iso-8859-1" />
+
+	<!-- Reference path for project -->
+	<property name="dist.dir" value="./dist" />
+
+	<!-- Base path for every module -->
+	<!-- the "base.path" for this script is the project workspace -->
+	<property name="base.path" value="${env.WORKSPACE}" />
+	<property name="base.path.view" value="${base.path}/${project.name}-view" />
+	<property name="base.path.domain" value="${base.path}/${project.name}-domain" />
+	<property name="base.path.business" value="${base.path}/${project.name}-business" />
+	<property name="base.path.persistence" value="${base.path}/${project.name}-persistence" />
+
+	<!-- Build path for every module -->
+	<property name="build.dir" value="./build" />
+	<property name="build.dir.view" value="${build.dir}/${project.name}-view" />
+	<property name="build.dir.domain" value="${build.dir}/${project.name}-domain" />
+	<property name="build.dir.business" value="${build.dir}/${project.name}-business" />
+	<property name="build.dir.persistence" value="${build.dir}/${project.name}-persistence" />
+
+	<!-- Build default properties -->
+	<property name="java.specification.version" value="1.6" />
+	<property name="lib.shared" value="${env.LATAM_SHARED_LIB}" />
+	<property name="lib.shared.expanded" value="${build.dir}/expandedLibs" />
+
+	<!-- Server specificaton -->
+	<property name="lib.server.modules" value="${env.MW_HOME}/modules" />
+	<property name="lib.server" value="${env.MW_HOME}/wlserver/server/lib" />
+
+	<path id="app-classpath">
+		<dirset dir="${lib.shared.expanded}" />
+		<fileset dir="${lib.shared.expanded}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${lib.server}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${lib.server.modules}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${basedir}/EarContent/APP-INF/lib">
+			<include name="**/WS*.jar" />
+			<include name="**/ws*.jar" />
+			<include name="**/Ws*.jar" />
+			<include name="**/resource-provider.jar" />
+		</fileset>
+	</path>
+
+	<path id="war-classpath">
+		<fileset dir="${build.dir.domain}">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${build.dir.business}">
+			<include name="*.jar" />
+		</fileset>
+		<path refid="business-classpath" />
+	</path>
+
+	<path id="business-classpath">
+		<fileset dir="${build.dir.domain}">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${build.dir.persistence}">
+			<include name="*.jar" />
+		</fileset>
+		<path refid="persistence-classpath" />
+	</path>
+
+	<path id="persistence-classpath">
+		<fileset dir="${build.dir.domain}">
+			<include name="*.jar" />
+		</fileset>
+		<path refid="app-classpath" />
+	</path>
+
+	<!-- Shared libs expander -->
+	<macrodef name="extractLibs">
+		<attribute name="libraryName" />
+		<attribute name="insideLibraryLocation" />
+		<sequential>
+			<property name="expander.file" value="${lib.shared}/@{libraryName}" />
+			<loadproperties>
+				<zipentry zipfile="${expander.file}" name="META-INF/MANIFEST.MF" />
+				<filterchain>
+					<linecontains>
+						<contains value="Extension-Name" />
+					</linecontains>
+				</filterchain>
+			</loadproperties>
+			<property name="expander.libname" value="${Extension-Name}" />
+			<echo message="Importing ${expander.libname}" />
+
+			<mkdir dir="${lib.shared}/tmp" />
+			<unzip src="${lib.shared}/@{libraryName}" dest="${lib.shared}/tmp" overwrite="true" />
+			<move todir="${lib.shared.expanded}" overwrite="true">
+				<fileset dir="${lib.shared}/tmp">
+					<include name="*.jar" />
+				</fileset>
+				<fileset dir="${lib.shared}/tmp/@{insideLibraryLocation}/lib">
+					<include name="*.jar" />
+				</fileset>
+				<fileset dir="${lib.shared}/tmp/@{insideLibraryLocation}/classes">
+					<include name="**/*.class" />
+				</fileset>
+			</move>
+			<delete dir="${lib.shared}/tmp" />
+		</sequential>
+	</macrodef>
+	<target name="expand-libs">
+		<scriptdef name="expand" language="javascript">
+			<element name="fileset" type="fileset" />
+			<![CDATA[
+			for(i=0;i<elements.get("fileset").size();i++){
+				files = elements.get("fileset").get(i).getDirectoryScanner( project ).getIncludedFiles();
+				for(f=0;f<files.length;f++){
+					fileName = files[f];
+					self.log("Processing " + fileName);
+					extractor = project.createTask("extractLibs");
+					extractor.getRuntimeConfigurableWrapper().setAttribute("libraryName", fileName);
+					if (fileName.toLowerCase().indexOf(".ear")>0){
+						extractor.getRuntimeConfigurableWrapper().setAttribute("insideLibraryLocation", "APP-INF" );
+					}else{
+						extractor.getRuntimeConfigurableWrapper().setAttribute("insideLibraryLocation", "WEB-INF" );
+					}
+					extractor.perform();
+				}
+			}
+			]]>
+		</scriptdef>
+		<expand>
+			<fileset dir="${lib.shared}">
+				<include name="*.ear" />
+				<include name="*.war" />
+			</fileset>
+		</expand>
+	</target>
+
+	<target name="calculate-version">
+		<scriptdef name="getVersion" language="javascript">
+			<attribute name="name" />
+			<![CDATA[
+			var version = "";
+			var reDefinition = ".*-([0-9]\\.[0-9])";
+			var re = new RegExp(reDefinition);
+			var name = attributes.get("name");		
+			var match = re.exec(name);
+			if (match!=null){
+				version = match[1];
+			}else{
+				throw "Error";
+			}
+			
+			var now = new Date();
+			var month = now.getMonth();
+			var day = now.getDate();
+			if (month < 10){
+				month = "0" + month;
+			}
+			if (day < 10){
+				day = "0" + day;
+			}
+			var date = now.getFullYear() + month + day;
+			version += "." + date;			
+			project.setProperty("project.version", version);
+			]]>
+		</scriptdef>
+		<getVersion name="${project.name}" />
+		<echo message="Calculated Version: ${project.version}" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${dist.dir}" failonerror="true" />
+		<delete dir="${build.dir.view}" failonerror="true" />
+		<delete dir="${build.dir.business}" failonerror="true" />
+		<delete dir="${build.dir.persistence}" failonerror="true" />
+		<delete dir="${build.dir.domain}" failonerror="true" />
+		<delete dir="${lib.shared.expanded}" failonerror="true" />
+		<delete dir="${lib.shared.expanded}" failonerror="true" />
+		<mkdir dir="build" />
+	</target>
+
+	<target name="build-domain" depends="clean,calculate-version,expand-libs">
+		<mkdir dir="${build.dir.domain}" />
+		<mkdir dir="${build.dir.domain}/src" />
+		<javac includeAntRuntime="false" debug="true" deprecation="false" encoding="${project.encoding}" destdir="${build.dir.domain}/src" nowarn="on" source="${java.specification.version}" target="${java.specification.version}">
+			<classpath refid="app-classpath" />
+			<src path="${base.path.domain}/src" />
+		</javac>
+		<jar jarfile="${build.dir.domain}/${project.name}-domain.jar" basedir="${build.dir.domain}/src">
+			<fileset dir="${base.path.domain}/src" includes="**/*.properties" />
+			<manifest>
+				<attribute name="Implementation-Title" value="${project.name}-business.jar" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="build-persistence" depends="build-domain">
+		<mkdir dir="${build.dir.persistence}" />
+		<mkdir dir="${build.dir.persistence}/src" />
+		<javac includeAntRuntime="false" debug="true" deprecation="false" encoding="${project.encoding}" destdir="${build.dir.persistence}/src" nowarn="on" source="${java.specification.version}" target="${java.specification.version}">
+			<classpath refid="persistence-classpath" />
+			<src path="${base.path.persistence}/src" />
+		</javac>
+		<jar jarfile="${build.dir.persistence}/${project.name}-persistence.jar" basedir="${build.dir.persistence}/src">
+			<fileset dir="${base.path.persistence}/src" includes="**/*.properties,**/*.xml" />
+			<manifest>
+				<attribute name="Implementation-Title" value="${project.name}-business.jar" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="build-war" depends="build-business">
+
+		<mkdir dir="${build.dir.view}" />
+
+		<mkdir dir="${build.dir.view}/WEB-INF/classes" />
+		<mkdir dir="${build.dir.view}/WEB-INF/lib" />
+
+		<!-- Web Descriptors and Configuration Project files -->
+		<copy todir="${build.dir.view}/WEB-INF/classes" includeemptydirs="true">
+			<fileset dir="${base.path.view}/src">
+				<include name="**/*.xml" />
+				<include name="**/*.properties" />
+				<include name="**/*.MF" />
+			</fileset>
+		</copy>
+
+		<!-- Static Web files -->
+		<copy todir="${build.dir.view}" includeemptydirs="true">
+			<fileset dir="${base.path.view}/WebContent">
+				<include name="**/*" />
+				<exclude name="WEB-INF/**/*" />
+			</fileset>
+		</copy>
+
+		<!-- Descriptors -->
+		<copy todir="${build.dir.view}" includeemptydirs="true">
+			<fileset dir="${base.path.view}/WebContent">
+				<include name="WEB-INF/**/*" />
+			</fileset>
+		</copy>
+
+		<!-- view modules compilation -->
+		<javac destdir="${build.dir.view}/WEB-INF/classes" includeAntRuntime="false" encoding="${project.encoding}" source="${java.specification.version}" target="${java.specification.version}" debug="true" deprecation="false" optimize="false" failonerror="true">
+			<src path="${base.path.view}/src" />
+			<classpath refid="war-classpath" />
+		</javac>
+
+		<!-- WAR file creation -->
+		<war warfile="${build.dir.view}/${project.name}-view.war" webxml="${build.dir.view}/WEB-INF/web.xml">
+			<!-- MANIFEST.MF -->
+			<manifest>
+				<attribute name="Implementation-Title" value="${project.name}-business.jar" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+			</manifest>
+			<!-- binarios java -->
+			<classes dir="${build.dir.view}/WEB-INF/classes" />
+			<!-- web files -->
+			<fileset dir="${build.dir.view}">
+				<include name="**/*" />
+				<exclude name="WEB-INF/classes/**/*" />
+			</fileset>
+		</war>
+	</target>
+
+	<target name="build-business" depends="build-persistence">
+		<!-- Temp folders -->
+		<mkdir dir="${build.dir.business}/src" />
+		<property name="ejbbuild" value="${build.dir.business}/src" />
+
+		<!-- Source Compilation -->
+		<javac srcdir="${base.path.business}/ejbModule" destdir="${ejbbuild}" classpathref="business-classpath" debug="true" deprecation="false" nowarn="true" source="${java.specification.version}" target="${java.specification.version}" includeAntRuntime="false" />
+
+		<!-- JAR specifications -->
+		<jar destfile="${build.dir.business}/${project.name}-business.jar">
+			<manifest>
+				<attribute name="Implementation-Title" value="${project.name}-business.jar" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+			</manifest>
+			<fileset dir="${ejbbuild}" includes="**/*.class" />
+			<fileset dir="${base.path.business}/ejbModule" includes="**/*.properties,**/*.xml" />
+		</jar>
+	</target>
+
+	<target name="build-ear" depends="build-wsclient,build-war">
+		<sequential>
+			<mkdir dir="${dist.dir}" />
+			<!-- EAR specifications -->
+			<ear destfile="${dist.dir}/${project.name}.ear" appxml="${basedir}/EarContent/META-INF/application.xml">
+				<manifest>
+					<attribute name="Implementation-Title" value="${project.name}" />
+					<attribute name="Implementation-Version" value="${project.version}" />
+				</manifest>
+				<fileset dir="${build.dir.view}" includes="**/*.war" />
+				<fileset dir="${build.dir}" includes="**/*.war" />
+				<fileset dir="${build.dir.business}" includes="**/*.jar" />
+				<zipfileset dir="${build.dir.persistence}" includes="**/*.jar" prefix="APP-INF/lib" />
+				<zipfileset dir="${build.dir.domain}" includes="**/*.jar" prefix="APP-INF/lib" />
+				<zipfileset dir="${basedir}/EarContent/APP-INF/lib" prefix="APP-INF/lib">
+					<include name="WS*.jar" />
+					<include name="ws*.jar" />
+					<include name="Ws*.jar" />
+					<include name="resource-provider.jar" />
+				</zipfileset>
+				<zipfileset dir="${basedir}/EarContent/META-INF" includes="**/*.xml" excludes="**/application.xml" prefix="META-INF" />
+			</ear>
+
+			<ant target="post-clean" />
+		</sequential>
+	</target>
+
+	<target name="post-clean">
+		<delete dir="${build.dir.view}" deleteonexit="true" includeemptydirs="true" />
+		<delete dir="${build.dir.business}" deleteonexit="true" includeemptydirs="true" />
+		<delete dir="${build.dir.persistence}" deleteonexit="true" includeemptydirs="true" />
+		<delete dir="${build.dir.domain}" deleteonexit="true" includeemptydirs="true" />
+		<delete dir="${lib.shared.expanded}" deleteonexit="true" includeemptydirs="true" />
+	</target>
+
+	<!-- Deploy and Undeploy task -->
+	<path id="wlappc.classpath">
+		<fileset dir="${lib.server}">
+			<include name="weblogic.jar" />
+		</fileset>
+	</path>
+	<taskdef name="wldeploy" classpathref="wlappc.classpath" classname="weblogic.ant.taskdefs.management.WLDeploy" />
+
+	<target name="deploy">
+		<echo>Username: ${wls.username}</echo>
+		<echo>Password: ${wls.password}</echo>
+		<echo>App Name: ${project.name}</echo>
+		<wldeploy action="deploy" name="${project.name}" source="${dist.dir}/${project.name}.ear" user="${wls.username}" password="${wls.password}" verbose="false" debug="false" remote="true" upload="true" adminurl="t3://${wls.hostname}:${wls.port}" targets="${wls.server.name}" />
+	</target>
+
+	<target name="undeploy">
+		<echo>Username: ${wls.username}</echo>
+		<echo>Password: ${wls.password}</echo>
+		<wldeploy action="undeploy" name="${project.name}" failonerror="false" user="${wls.username}" password="${wls.password}" verbose="false" debug="false" remote="true" adminurl="t3://${wls.hostname}:${wls.port}" targets="${wls.server.name}" />
+	</target>
+
+	<!--target name="build-ws">
+
+		<ant antfile="../WSCreateElectronicAwb-1.0.0/build.xml" target="war" inheritRefs="true" inheritAll="false">
+			<property name="jaxws.home" value="${env.MW_HOME}/modules/" />
+			<property name="basedir" value="${env.WORKSPACE}/WSCreateElectronicAwb-1.0.0/" />
+		</ant>
+		<copy todir="${build.dir.view}" includeemptydirs="true">
+			<fileset dir="${env.WORKSPACE}/WSCreateElectronicAwb-1.0.0/build" includes="**/*.war" />
+		</copy>
+		<delete dir="${build.dir}/WSCreateElectronicAwb-web.war" deleteonexit="true" includeemptydirs="true"/>
+		<mkdir dir="${build.dir}/WSCreateElectronicAwb-web.war"/>
+		<unzip src="${env.WORKSPACE}/WSCreateElectronicAwb-1.0.0/build/WSCreateElectronicAwb-web.war" dest="${build.dir}/WSCreateElectronicAwb-web.war"/>
+	</target-->
+
+
+	<!-- TaskDef para foreach -->
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+		<classpath>
+			<pathelement location="${lib.server.modules}/net.sf.antcontrib_1.1.0.0_1-0b2/lib/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
+	<!--
+		Crear WSServer usando template
+		-->
+	<property file="ws-list.properties" />
+	<target name="build-ws" description="Genera las clases para los WS">
+		<echo>${wsname}</echo>
+		<foreach list="${wsname}" delimiter="," param="wsname" target="make-ws">
+		</foreach >
+	</target>
+
+	<target name="make-ws">
+		<echo>WebService  : ${wsname}</echo>
+		<ant antfile="../${wsname}/build.xml" target="war" inheritRefs="true" inheritAll="false">
+			<property name="jaxws.home" value="${env.MW_HOME}/modules/" />
+			<property name="basedir" value="${env.WORKSPACE}/${wsname}/" />
+		</ant>
+
+		<delete dir="${build.dir}/${wsname}-web.war" deleteonexit="true" includeemptydirs="true" />
+		<!--mkdir dir="${build.dir}/${wsname}-web.war" />
+		<unzip src="${env.WORKSPACE}/${wsname}/build/${wsname}-web.war" dest="${build.dir}/${wsname}-web.war" /-->
+		<copy todir="${build.dir}" includeemptydirs="true">
+			<fileset dir="${env.WORKSPACE}/${wsname}/build" includes="**/*.war" />
+		</copy>
+	</target>
+	<!--
+		FIN:Crear WSServer usando template
+		-->
+
+
+
+
+	<path id="weblogic.modules.classpath">
+		<fileset dir="${lib.server.modules}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	<taskdef name="wsimport" classname="com.sun.tools.ws.ant.WsImport">
+		<classpath refid="weblogic.modules.classpath">
+		</classpath>
+	</taskdef>
+	<!--
+			Para crear los jar de los WSClientes
+			-->
+	<property file="wsclient-list.properties" />
+	<target name="build-wsclient" description="Genera el JAR del cliente WS">
+		<mkdir dir="${build.dir}/ws" />
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+			<classpath>
+				<pathelement location="wsclient/apache-ant-contrib-0.6/lib/ant-contrib-0.6.jar" />
+			</classpath>
+		</taskdef>
+		<for list="${wsclient.list}" delimiter="," param="ws">
+			<sequential>
+				<echo>Processing Client: @{ws}</echo>
+				<echo>WSDL: ${@{ws}.url}</echo>
+				<make-wsclient wsname="${@{ws}.name}" wsdescription="${@{ws}.description}" wsversion="${@{ws}.version}" wsvendor="${@{ws}.vendor}" wspackagename="${@{ws}.package}" wsurl="${@{ws}.url}" wsclientdir="${build.dir}/ws" />
+			</sequential>
+		</for>
+	</target>
+
+	<macrodef name="make-wsclient">
+		<attribute name="wsname" />
+		<attribute name="wsdescription" />
+		<attribute name="wsversion" />
+		<attribute name="wsvendor" />
+		<attribute name="wspackagename" />
+		<attribute name="wsurl" />
+		<attribute name="wsclientdir" />
+		<sequential>
+			<echo>Making client for WebService: @{wsname}</echo>
+			<delete dir="@{wsclientdir}" />
+			<mkdir dir="@{wsclientdir}" />
+			<wsimport debug="true" verbose="true" keep="false" destdir="@{wsclientdir}" package="@{wspackagename}" wsdl="@{wsurl}" xendorsed="true">
+			</wsimport>
+			<echo>Making jar for WebService: @{wsname}</echo>
+			<jar destfile="${basedir}/EarContent/APP-INF/lib/WS-@{wsname}-@{wsversion}.jar" basedir="@{wsclientdir}">
+				<manifest>
+					<section name="@{wsname}">
+						<attribute name="Implementation-Title" value="@{wsdescription}" />
+						<attribute name="Implementation-Version" value="@{wsversion}" />
+						<attribute name="Implementation-Vendor" value="@{wsvendor}" />
+					</section>
+				</manifest>
+			</jar>
+			<delete dir="@{wsclientdir}" />
+		</sequential>
+	</macrodef>
+	<!--
+			FIN: Para crear los jar de los WSClientes
+			-->
+
+</project>
