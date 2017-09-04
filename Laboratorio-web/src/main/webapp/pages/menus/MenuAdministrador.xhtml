@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns:ui="http://java.sun.com/jsf/facelets" 
+				xmlns="http://www.w3.org/1999/xhtml" 
+				xmlns:f="http://java.sun.com/jsf/core" 
+				xmlns:h="http://java.sun.com/jsf/html" 
+				xmlns:my="http://java.sun.com/jsf/composite/components" 
+				xmlns:p="http://primefaces.org/ui"
+				template="layoutMenu.xhtml">
+	<ui:define name="head">
+		<h:form>
+			<div align="center">
+				<h:graphicImage name="imagenes/cabecera.png"/>
+			</div>
+		</h:form>
+	</ui:define>
+	<ui:define name="body">
+		<h:form>
+			<p:growl id="msgs" showDetail="true" life="5000" />
+			<div align="center">
+			  <h:outputLabel value="Menu" style="text-align:center; font-weight: bold;" />
+			</div>
+		</h:form>
+	</ui:define>
+	<ui:define name="pie">
+		<h:form>
+			<div align="center">
+				<p:graphicImage name="imagenes/pie.png"/>
+			</div>
+		</h:form>
+	</ui:define>
+</ui:composition>

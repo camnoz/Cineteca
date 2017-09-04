@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PROCESS model-entity="JSFProcess">
+ <PROCESS-ITEM NAME="rules:#pages#Login.xhtml" PATH="/pages/Login.xhtml"
+  SHAPE="32,17,0,0" model-entity="JSFProcessGroup">
+  <PROCESS-ITEM ID="rules:#pages#Login.xhtml:0" NAME="item"
+   PATH="/pages/Login.xhtml" model-entity="JSFProcessItem">
+   <PROCESS-ITEM-OUTPUT
+    ID="MenuAdministrador::#pages#menus#MenuAdministrador.xhtml"
+    NAME="output" PATH="/pages/menus/MenuAdministrador.xhtml"
+    TARGET="rules:#pages#menus#MenuAdministrador.xhtml"
+    TITLE="MenuAdministrador" model-entity="JSFProcessItemOutput"/>
+   <PROCESS-ITEM-OUTPUT
+    ID="MenuSupervisor::#pages#menus#MenuSupervisor.xhtml"
+    NAME="output1" PATH="/pages/menus/MenuSupervisor.xhtml"
+    TARGET="rules:#pages#menus#MenuSupervisor.xhtml"
+    TITLE="MenuSupervisor" model-entity="JSFProcessItemOutput"/>
+   <PROCESS-ITEM-OUTPUT
+    ID="MenuAnalista::#pages#menus#MenuSupervisor.xhtml" NAME="output2"
+    PATH="/pages/menus/MenuSupervisor.xhtml"
+    TARGET="rules:#pages#menus#MenuSupervisor.xhtml"
+    TITLE="MenuAnalista" model-entity="JSFProcessItemOutput"/>
+  </PROCESS-ITEM>
+ </PROCESS-ITEM>
+ <PROCESS-ITEM NAME="rules:#pages#menus#MenuSupervisor.xhtml"
+  PATH="/pages/menus/MenuSupervisor.xhtml" SHAPE="272,209,0,0" model-entity="JSFProcessGroup"/>
+ <PROCESS-ITEM NAME="rules:#pages#menus#MenuAdministrador.xhtml"
+  PATH="/pages/menus/MenuAdministrador.xhtml" SHAPE="272,33,0,0" model-entity="JSFProcessGroup"/>
+</PROCESS>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="Laboratorio-ear-0.1-SNAPSHOT">
+        <wb-resource deploy-path="/" source-path="/target/m2e-wtp/ear-resources"/>
+        <wb-resource deploy-path="/" source-path="/src/main/application" tag="defaultRootSource"/>
+        <dependent-module archiveName="Laboratorio-api-0.1-SNAPSHOT.jar" deploy-path="/lib" handle="module:/resource/Laboratorio-api/Laboratorio-api">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="Laboratorio-ejb-0.1-SNAPSHOT.jar" deploy-path="/" handle="module:/resource/Laboratorio-ejb/Laboratorio-ejb">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="Laboratorio-web-0.1-SNAPSHOT.war" deploy-path="/" handle="module:/resource/Laboratorio-web/Laboratorio-web">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="mybatis-3.4.5.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/org/mybatis/mybatis/3.4.5/mybatis-3.4.5.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="mysql-connector-java-5.1.31.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/mysql/mysql-connector-java/5.1.31/mysql-connector-java-5.1.31.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="log4j-1.2.17.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/log4j/log4j/1.2.17/log4j-1.2.17.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+    </wb-module>
+</project-modules>

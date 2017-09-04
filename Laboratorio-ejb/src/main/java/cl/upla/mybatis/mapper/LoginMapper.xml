@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="LoginMapper">
+	
+	<select id="validarLogin" resultType="cl.upla.lab.Usuarios" parameterType="cl.upla.lab.Login">
+		SELECT
+		RUT,
+		NOMBRE,
+		AP_PATERNO,
+		AP_MATERNO,
+		NIVEL
+		FROM USUARIOS
+		WHERE USUARIO = #{usuario}
+		AND PASSWORD = #{password}
+	</select>
+
+</mapper>

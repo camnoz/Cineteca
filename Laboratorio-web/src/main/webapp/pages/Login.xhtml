@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns:ui="http://java.sun.com/jsf/facelets" 
+				xmlns="http://www.w3.org/1999/xhtml" 
+				xmlns:f="http://java.sun.com/jsf/core" 
+				xmlns:h="http://java.sun.com/jsf/html" 
+				xmlns:my="http://java.sun.com/jsf/composite/components" 
+				xmlns:p="http://primefaces.org/ui"
+				template="layoutLogin.xhtml">
+	<ui:define name="head">
+		<h:form>
+			<div align="center">
+				<h:graphicImage name="imagenes/cabecera.png"/>
+			</div>
+		</h:form>
+	</ui:define>
+	<ui:define name="body">
+		<h:form>
+			<p:growl id="msgs" showDetail="true" life="5000" />
+			<div align="center">
+		        <p:panelGrid columns="2">
+		        	<f:facet name="header">
+				        <p:graphicImage name="imagenes/logoLogin.png" />
+				    </f:facet>
+		            <h:outputLabel for="username" value="Usuario:" style="text-align:center; font-weight: bold;" />
+		            <p:inputText  id="username" value="#{loginBean.login.usuario}" />
+					<h:outputLabel for="password" value="Contraseña:" style="text-align:center; font-weight: bold;" />
+		            <p:password  id="password" value="#{loginBean.login.password}" />
+		 			<p:commandButton value="Ingresar"  style="width: 250px;" action="#{loginBean.validarLogin()}" update="msgs"/>
+		            <p:commandButton value="Salir" style="width: 250px;" />
+		        </p:panelGrid>
+			</div>
+		</h:form>
+	</ui:define>
+	<ui:define name="pie">
+		<h:form>
+			<div align="center">
+				<p:graphicImage name="imagenes/pie.png"/>
+			</div>
+		</h:form>
+	</ui:define>
+</ui:composition>

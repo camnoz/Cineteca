@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:f="http://java.sun.com/jsf/core" 
+	xmlns:h="http://java.sun.com/jsf/html" 
+	xmlns:p="http://primefaces.org/ui" 
+	xmlns:ui="http://java.sun.com/jsf/facelets">
+	<h:head>
+		<title>#{mensajes.layoutTitulo}</title>
+		<f:facet name="first">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+		</f:facet>
+		<f:loadBundle basename="cl.upla.properties.mensajes" var="mensajes" />
+	</h:head>
+	<body bgcolor="celeste" >
+		<p:layout fullPage="true">
+		    <p:layoutUnit position="north" style="position: static;" header="100" size="100" resizable="false" closable="false" collapsible="false">
+		       <ui:insert name="head" />
+		    </p:layoutUnit>
+		    <p:layoutUnit position="south" header="91" size="100" resizable="false" closable="false" collapsible="false">
+		        <ui:insert name="pie" />
+		    </p:layoutUnit>
+		    <p:layoutUnit position="west" size="200" header="Menú" resizable="true" closable="false" collapsible="true">
+		        <ui:insert name="left" />
+		    </p:layoutUnit>
+		    <p:layoutUnit position="center" >
+		        <ui:insert name="body" />
+		    </p:layoutUnit>
+		</p:layout>
+	</body>
+</html>	
